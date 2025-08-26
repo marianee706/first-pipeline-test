@@ -1,50 +1,98 @@
-// Jenkinsfile ที่สมบูรณ์และมี Post block
 pipeline {
+  // Task 2, Exercise: เพิ่ม parameters สำหรับเลือก environment
+  parameters {
+    booleanParam(name: 'RUN_DEPLOY', defaultValue: true, description: 'Should we deploy?')
+    string(name: 'ENVIRONMENT', defaultValue: 'dev', description: 'Select the target environment (dev, staging, prod)')
+  }
   agent any
   stages {
     stage('Build') {
       steps {
-        echo 'Building the application...'
+        echo 'Building application...'
       }
     }
-    stage('Test') {
+
+    // Task 1, Exercise: Parallel stages เพื่อจำลองการทดสอบบนระบบต่างๆ
+    stage('Test in Parallel') {
+      parallel {
+        stage('Unit Tests') {
+          // Exercise: Unit Tests runs only if Build succeeds.
+          // Note: ใน Declarative Pipeline stage จะไม่รันหาก stage ก่อนหน้าล้มเหลวอยู่แล้ว
+          // ดังนั้น condition นี้จะถูกทำโดยอัตโนมัติ
+          steps {
+            echo 'Running unit tests...'
+            sh 'sleep 5'
+          }
+        }
+        stage('Integration Tests') {
+          steps {
+            echo 'Running integration tests...'
+            sh 'sleep 5'
+          }
+        }
+        // Exercise: เพิ่มการจำลองการทดสอบบน OS ที่ต่างกัน
+        stage('Simulate Linux Test') {
+          steps {
+            echo 'Simulating tests on Linux...'
+          }
+        }
+        stage('Simulate Windows Test') {
+          steps {
+            echo 'Simulating tests on Windows...'
+          }
+        }
+      }
+    }
+    
+    // Task 3: สร้างและจัดเก็บ Artifacts
+    stage('Archive') {
       steps {
-        echo 'Running tests...'
+        echo 'Creating and archiving artifacts...'
+        sh 'echo "All tests passed!" > results.txt'
+        archiveArtifacts artifacts: 'results.txt', fingerprint: true
       }
     }
-    stage('Package') {
+
+    // Task 4: เพิ่มขั้นตอนการอนุมัติด้วยมือ
+    // Exercise: เพิ่ม timeout สำหรับ approval stage (ข้อที่คุณถาม)
+    stage('Approval for Deployment') {
+      // Exercise: Deploy runs only after manual approval
+      // Note: ขั้นตอนนี้จะถูก skipped หาก RUN_DEPLOY เป็น false
+      when {
+        expression { return params.RUN_DEPLOY }
+      }
       steps {
-        echo 'Creating package...'
-        // คำสั่ง zip -r my-app.zip . จะบีบอัดไฟล์ทั้งหมดใน directory ปัจจุบัน
-        sh 'zip -r my-app.zip .'
-        // แสดงไฟล์ใน workspace เพื่อให้เห็นว่า my-app.zip ถูกสร้างขึ้น
-        sh 'ls -l'
+        timeout(time: 2, unit: 'MINUTES') {
+          input message: "Do you want to proceed with deployment to ${params.ENVIRONMENT}?"
+        }
       }
     }
+
+    // Task 2: Stage การ Deploy ที่ใช้ Parameter และ Conditional Logic
     stage('Deploy') {
+      // Exercise: Deploy runs only after manual approval
+      // Note: การกำหนด "when" ใน stage นี้จะซ้ำซ้อนกับ stage "Approval"
+      // แต่เราจะเก็บไว้เพื่อแสดงให้เห็นการใช้ conditional logic
+      when {
+        expression { return params.RUN_DEPLOY }
+      }
       steps {
-        echo 'Deploying the application...'
+        echo "Deploying application to the ${params.ENVIRONMENT} environment..."
+        sh 'sleep 5' // Simulate deployment
       }
     }
   }
-  // บล็อก post เพื่อจัดการการแจ้งเตือนหลังจาก Pipeline จบ
+
+  // Task 5: เพิ่ม post conditions
   post {
-    // บล็อกนี้จะทำงานเสมอ ไม่ว่า Pipeline จะสำเร็จหรือล้มเหลว
     always {
-      echo 'This will always run after the pipeline finishes.'
+      echo 'Pipeline completed (success or failure).'
     }
-    // บล็อกนี้จะทำงานเฉพาะเมื่อ Pipeline สำเร็จ
     success {
-      echo 'Pipeline completed successfully 🎉'
+      echo '✅ Pipeline finished successfully!'
     }
-    // บล็อกนี้จะทำงานเฉพาะเมื่อ Pipeline ล้มเหลว
     failure {
-      echo 'Pipeline failed ❌'
+      echo '❌ Pipeline failed. Check logs!'
     }
-    // ทางเลือก: ใช้ cleanup เพื่อลบไฟล์ที่สร้างขึ้นหลัง Pipeline จบ
-    // cleanup {
-    //   echo 'Cleaning up generated files...'
-    //   sh 'rm -f my-app.zip'
-    // }
   }
 }
