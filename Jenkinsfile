@@ -16,10 +16,13 @@ pipeline {
         echo 'Deploying the application...'
       }
     }
-    stage('List Files') {
-      steps {
-        sh 'ls -l'
-      }
+  }
+  post {
+    success {
+      echo 'Pipeline completed successfully 🎉'
+    }
+    failure {
+      echo 'Pipeline failed ❌'
     }
   }
 }
