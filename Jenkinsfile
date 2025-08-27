@@ -3,11 +3,11 @@ pipeline {
 
     stages {
         stage('Build') {
-            steps {
-                git 'https://github.com/marianee706/first-pipeline-test.git'
-                bat "npm install"
-            }
-        }
+    steps {
+        git branch: 'main', url: 'https://github.com/marianee706/first-pipeline-test.git'
+        bat "npm install"
+    }
+}
 
         stage('Scan') {
             steps {
