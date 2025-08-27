@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                git 'https://github.com/marianee706/first-pipeline-test/blob/main/Jenkinsfile.git'
+                git 'https://github.com/marianee706/first-pipeline-test.git'
                 bat "npm install"
             }
         }
