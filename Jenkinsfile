@@ -3,17 +3,20 @@ pipeline {
 
     stages {
         stage('Build') {
-    steps {
-        git branch: 'main', url: 'https://github.com/marianee706/first-pipeline-test.git'
-        bat "npm install"
-    }
-}
+            steps {
+                // เปลี่ยน git branch เป็น main
+                git branch: 'main', url: 'https://github.com/marianee706/first-pipeline-test.git'
+                // เปลี่ยน bat เป็น sh เพื่อรันบน Linux
+                sh "npm install" 
+            }
+        }
 
         stage('Scan') {
             steps {
                 withSonarQubeEnv(installationName: 'sq1') {
-                    bat "npm install sonar-scanner"
-                    bat 'npx sonar-scanner -X -X -Dsonar.projectKey=mywebapp'
+                    // เปลี่ยน bat เป็น sh เพื่อรันบน Linux
+                    sh "npm install sonar-scanner"
+                    sh 'npx sonar-scanner -X -X -Dsonar.projectKey=mywebapp'
                 }
             }
         }
